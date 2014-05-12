@@ -1,0 +1,40 @@
+  2013-10-11	AS
+* Workstation upgraded to kubuntu 13.04. Root: 
+ROOT 5.34/00 (branches/v5-34-00-patches@44555, Apr 18 2013, 04:51:00 on linux)
+  - tdq.cxx. added #include <sys/stat.h>
+
+  2013-10-29	AS
+* Better handling of ERRDQ_STAMP error for a case when unexpected words are
+padded at the end of the event. 
+ERRDQ_IO changed to -1 to exit from the event loop in case of read errors
+
+  2013-10-31	AS
+* Minor changes, printing FPGA version number.
+- Binning of fhchns corrected, xrange changed to 0,256. 
+- Printing FPGA version.
+- hex position for 'EOE not found'
+
+  2013-11-01	AS
+*  - Take care of EOE at the end of file
+
+  2013-11-04	AS
+*  - Better bookkeeping of errors.
+   FindEOE prints corrected excess.
+
+  2013-11-05	AS
+*  - CRC check is activated.
+
+  2013-11-06	AS
+*  - Better handling of errors.
+
+  2013-11-07	AS
+*  - The EOD stamp is tested first in the event processing.
+   - fpos is set only in the GetHeader and it points to the beginning of event.
+
+  2013-11-14	AS
+*  -  maxEntry = 1000000;
+
+  2014-03-11	AS
+*  - gExtraWords static added. It should be set to 1 
+*  (using gdq->gExtraWords=1;) for processing simulated data.
+
