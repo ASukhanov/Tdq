@@ -1,0 +1,28 @@
+HowTo
+
+///////////////////
+Calculate pedestals:
+$root -l init.C
+
+Tdq* gdq = new Tdq()	//creat dummy Tdq to access static variables
+
+gdq->gStripMapping = 0	//to disable strip gStripMapping
+
+.x process_file.C("~/data/slac/140730100346.dq4")
+
+.x get_pedestals.C(hchain0);	//calculate pedestals to pedestals_calc.txt
+
+exit from root.
+rename pedestals_calc.txt to pedestals.txt for further use in root.
+
+//////////////////
+To enable pedestal subtraction
+
+$ root -l init.C
+Tdq* gdq = new Tdq()
+gdq->gSubtractPeds = 1
+.x process_file.C("~/data/slac/140730100346.dq4")
+
+to view the result:
+.x view_amplitudes_for_selected_clockphases.C
+
