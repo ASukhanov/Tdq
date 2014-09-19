@@ -12,11 +12,6 @@
 //&RA/120314/#define COMMON_MODE_NOSE_PROCESSING 1
 #define COMMON_MODE_NOSE_PROCESSING 0
 
-//Uncoment the next line (and also in Tdq.cxx) to switch from svx4 channel number to strip number
-//#define SWAP 1
-
-//#undef PEDESTAL_PROCESSING
-
 /*
 //#include "n3c.h"
 #define MAXCHIPS 2
@@ -67,35 +62,6 @@ Int_t process_file(TString txt, Int_t cmnproc=0)
 	if(!gdq->IsOpen()) return;
 	cout<<endl;
 	//cout<<"CmnProc="<<(gdq->gCMNControl)<<endl;
-	cout<<"Extra words: "<<gdq->gExtraWords<<endl;
-
-#ifdef SWAP
-//Added by Arbin
-//SVX4 channels go from 0 to 127, Strip channels go from 1 to 128
-	cout<<"Processing swap.txt"<<endl;
-		
-       		ifstream fin("swap.txt");
-   		string line;
-
-   		 while (getline(fin, line)) {
-       		        istringstream tokenizer(line);
-        		string token;
-
-        		getline(tokenizer, token, ',');
-        		istringstream int_iss(token);
-        		Int_t svx4;
-        		int_iss >> svx4;
-        		//cout<<"svx4: 	"<<svx4<<endl;
-
-        		getline(tokenizer, token, ',');
-        		istringstream int_isss(token);
-        		Int_t strip;
-        		int_isss >> strip;
-        		//cout<<"strip: "<<strip<<endl;
-				
-			gdq->Swap(svx4,strip);
-				       	  }
-#endif
 	
 #ifdef PEDESTAL_PROCESSING
 //Set pedestal value for each channel in each plane
@@ -146,8 +112,30 @@ Int_t process_file(TString txt, Int_t cmnproc=0)
 	for(int ich=0;ich<MAXCH;ich++) gdq->SetPed(ichain,ich,0,1);
     }
 #endif//	PEDPROC
-
-
+	if(gdq->gSubtractPeds)
+	{
+	    cout<<"Processing pedestals"<<endl;
+	    ifstream fin("pedestals.txt");
+	    TString tl;
+	    TString tok;
+	    string line;
+	    Int_t iy=-1,ix=-2,ii=0;
+	    while(getline(fin, line))
+	    {
+		    ix=0;
+		    tl = TString(line);
+		    tl.Tokenize(tok,ix,"\t");
+		    if(ix<0)continue;
+		    tl.Tokenize(tok,ix,"\t");
+		    //cout<<ii<<":"<<tok<<endl;
+		    if(tok.IsDec())    iy = tok.Atoi();
+		    else break;
+		    //if (ii<10) cout<<ii<<":"<<iy<<endl;
+		    gdq->SetPed(0,ii,iy,1);	// 2014-07-31. only first chain is processed.
+		    ii++;
+	    }
+	    cout<<"Set "<<ii<<" pedestals from pedestals.txt to chain0"<<endl;
+	}
 	gdq->SetCMNoiseQuantile(0.25); //0. -disables common mode noise processing, default = .25
 	gdq->SetCMNoiseLimit(50);
 	//cout<<"TTree *t=gdq->MakeTree(); > ";//gets(txtline);

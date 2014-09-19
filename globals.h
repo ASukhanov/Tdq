@@ -10,7 +10,8 @@
 #define ASICS_IN_CHAIN 13
 #define MAXCH NCHAINS*ASICS_IN_CHAIN*CH_IN_ASIC
 
-#undef SWAP
+//#undef SWAP	//to work with SVX channel numbers
+//#define SWAP 1	//to work woth strip numbers
 
 #undef PEDESTAL_PROCESSING
 

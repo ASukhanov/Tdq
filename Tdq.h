@@ -46,7 +46,7 @@ private:
 	//&RA/Char_t fname[1024];
 	TTree	*ftree;
 	Char_t	fname[256];
-	Char_t	*fhtitle;
+	const Char_t	*fhtitle;
 	FILE    *fD; //file descriptor
 	TFile   *ffile;
 	Int_t	fsize;
@@ -109,11 +109,13 @@ private:
   public:
 	static	Int_t gDebug;
 	static Int_t gExtraWords;
+	static Int_t gStripMapping;
+	static Int_t gSubtractPeds;
 	void FillErr();
 	TH1I *fherr;
 	TArrayI fchnmap;
 
-	Tdq(Char_t *name="", Int_t cmnproc_mode=0, Char_t *htitle="");
+	Tdq(const Char_t *name="", Int_t cmnproc_mode=0, const Char_t *htitle="");
 	~Tdq();
 	//Bool_t IsOpen();
 	//void SetChnMap(Int_t ich, Int_t pedestal);

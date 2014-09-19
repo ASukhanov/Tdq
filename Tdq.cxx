@@ -50,9 +50,6 @@ TODO:
 //#define MAXERRPRINT 4
 //#endif 
 
-//Uncoment the next line (and also in the process_file.C) to switch from svx4 channel number to strip number
-//#define SWAP 1
-
 // for ntohl
 //#ifndef WIN32
 //#include <arpa/inet.h> 
@@ -75,6 +72,8 @@ using namespace std;
 using namespace TMath;
 
 #include "Tdq.h"
+#include "strip_pad_map.h"
+//#include "strip_nomap.h"	// for debugging
 
 Int_t Tdq::gDebug=0;
 Int_t dbg_cmnoise=0;
@@ -82,6 +81,8 @@ Int_t   Tdq::gCMNLimit = 40;	// this rejects 10% of events
 Int_t   Tdq::gCMNControl = 0;	// &1: call DoCMNoise, &2: subtract CMNoise
 Float_t Tdq::gCMNQuantile = 0.25;
 Int_t	Tdq::gExtraWords = 0;	// For events with simulated data this should be set to 1
+Int_t	Tdq::gStripMapping = 1;	// 1 to map ASIC channel number to sensor strip number
+Int_t	Tdq::gSubtractPeds = 0; //
 
 void Tdq::Swap(Int_t svx4ch, Int_t stripch)
 {
@@ -231,7 +232,7 @@ Int_t Tdq::FindEOE()
     //fpos = ftell(fD);
     //#ifdef DBG
     //printf("EOE not found. FindEOE=%i excess=%i @ %lx\n",rc,FINDEOE_ROLLBACK-ii,ftell(fD));
-    printf("EOE not found. FindEOE=%i skipped %i bytes @ %lx\n",rc,ftell(fD)-fpos,ftell(fD));
+    printf("EOE not found. FindEOE=%i skipped %li bytes @ %lx\n",rc,ftell(fD)-fpos,ftell(fD));
     //#endif
     return rc;
 }
@@ -299,7 +300,7 @@ Int_t Tdq::Process()
     if(fcrc) {ferr |= ERRDQ_CRC;}
     if((ferr&ERRDQ_CRC)!=0)
     {
-	if(ferrcount<MAXERRPRINT) printf("ERROR ERRDQ_CRC %04x @ %08lx, nerrs=%i\n",fcrc,fpos,ferrcount);
+	if(ferrcount<MAXERRPRINT) printf("ERROR ERRDQ_CRC %04x @ %08lx, nerrs=%li\n",fcrc,fpos,ferrcount);
 	#undef ERREXIT
 	#ifdef ERREXIT
 		FillErr();
@@ -358,7 +359,7 @@ Int_t Tdq::Process()
 		{
 		    ferr |= ERRDQ_CELLN; 
 		    if(ferrcount<MAXERRPRINT) 
-			printf("ERR=%04lx. Cell[%i]# %i>47. @ %08lx, nerrs=%i\n",
+			printf("ERR=%04lx. Cell[%i]# %i>47. @ %08lx, nerrs=%li\n",
 			    ferr,chain,fcelln[chain][nn],fpos,ferrcount);
 		}
 		if(fcelln[chain][nn]!=fcelln[chain][0])
@@ -378,10 +379,6 @@ Int_t Tdq::Process()
 	channel = ii/NCHAINS-1;
 	if(channel>=ASICS_IN_CHAIN*(CH_IN_ASIC+1))
 	    if(fentry<2) {cout<<"Skipping channel "<<channel<<endl;	continue;}
-	//Added by Arbin
-	#ifdef SWAP
-	channel=strip[channel];
-	#endif
 
 	if(NCHAINS == 1) chain = 0;
 	else
@@ -393,12 +390,13 @@ Int_t Tdq::Process()
 	if(status[chain][Pad(channel)]==0) 
 	    if(fentry<2) {cout<<"dead "<<chain<<","<<channel<<endl; continue;}
 
-	//Do pedestal subtraction
-	#ifdef PEDESTAL_PROCESSING
-	fchv[chain][channel] = (CHV_t)bbody[ii] - ped[chain][Pad(channel)] + 50;
-	#else
-	fchv[chain][channel] = (CHV_t)bbody[ii];
-	#endif
+	int ichip = channel/(CH_IN_ASIC+1);
+	int ich = channel % (CH_IN_ASIC+1);
+	if (gStripMapping) ich = PadNumber[ich];
+	CHV_t chv = (CHV_t)bbody[ii];
+	//if(gSubtractPeds) chv -= ped[chain][channel] + 50;
+	if(gSubtractPeds) chv -= ped[chain][channel];
+	fchv[chain][ichip*CH_IN_ASIC + ich] = chv;
 	
 	/*
 	if(gDebug) {
@@ -519,7 +517,8 @@ void Tdq::DoCMNoise(Int_t chain)
 		    //Skip dead channels
 		if(status[chain][chnn]==0) continue;
 
-		fchv[chain][chnn] -= (CHV_t)(fcmnoise[chain][ic] - 50.);
+		//fchv[chain][chnn] -= (CHV_t)(fcmnoise[chain][ic] - 50.);
+		fchv[chain][chnn] -= (CHV_t)(fcmnoise[chain][ic]);
 	    }
 	}
     }
@@ -528,7 +527,7 @@ Bool_t Tdq::IsOpen()
 {
 	return fD != 0;
 }
-Tdq::Tdq(Char_t *name, Int_t cmnproc_control, Char_t *htitle)
+Tdq::Tdq(const Char_t *name, Int_t cmnproc_control, const Char_t *htitle)
 {
     Int_t rc,ii;
     struct stat statv;
@@ -592,6 +591,11 @@ fnchn = ASICS_IN_CHAIN*CH_IN_ASIC;
     printf("Common mode noise subtraction is ");
     if(gCMNControl&2) printf("ON\n");
     else	printf("OFF\n");
+    printf("Channels are: ");
+    if(gStripMapping)	printf("Sensor strip numbers.\n");
+    else		printf("ASIC channel numbers.\n");
+    printf("To change mapppig change the global variable gdq->gStripMapping\n"); 
+    printf("Number of extra words (gdq->gExtraWords)=%i\n",gExtraWords);
     return;
 }
 Tdq::~Tdq()
@@ -628,10 +632,10 @@ TTree* Tdq::MakeTree(Int_t mode)
 	//ftree->Branch("f1chain1",&(flchain[1]),"flchain1/I");
 	//ftree->Branch("f1chain2",&(flchain[2]),"flchain2/I");
 	//ftree->Branch("f1chain3",&(flchain[3]),"flchain3/I");
-	ftree->Branch("chv0",fchv[0],"fchv0[flchain0]/s");
-	//ftree->Branch("chv1",fchv[1],"fchv1[flchain1]/s");
-	//ftree->Branch("chv2",fchv[2],"fchv2[flchain2]/s");
-	//ftree->Branch("chv3",fchv[3],"fchv3[flchain3]/s");
+	ftree->Branch("chv0",fchv[0],"fchv0[flchain0]/S");
+	//ftree->Branch("chv1",fchv[1],"fchv1[flchain1]/S");
+	//ftree->Branch("chv2",fchv[2],"fchv2[flchain2]/S");
+	//ftree->Branch("chv3",fchv[3],"fchv3[flchain3]/S");
 	ftree->Branch("hitadcs0",hitadc[0],"hitadc0[flchain0]/F");
 	//ftree->Branch("hitadcs1",hitadc[1],"hitadc1[flchain1]/F");
 	//ftree->Branch("hitadcs2",hitadc[2],"hitadc2[flchain2]/F");
@@ -666,7 +670,7 @@ TTree* Tdq::MakeTree(Int_t mode)
     for(fentry=0;fentry<maxEntry;fentry++)
     {
 		if(Next()<0) break;
-		if((fentry%100)==0) printf("nev=%i,nerr=%i,err=%08lx\n",fentry,ferrcount,ferr);
+		if((fentry%100)==0) printf("nev=%i,nerr=%li,err=%08lx\n",fentry,ferrcount,ferr);
     }
     printf("Break after %i events\n",fentry);
     if(fentry)
