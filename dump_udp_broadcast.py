@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+#usage: ./dump_udp_broadcast [-w] [-d[]
+
 data_directory = "/tmp/"
 port = 1792  # where do you expect to get a msg?
 bufferSize = 7000 # whatever you need
@@ -13,30 +15,31 @@ sfil = None
 run_started = -1
 bytesin = 0.
 rc = 0
-writing_enabled = 0
+writing_enabled = False
+dump_enable = False
 
 # hex dump
-FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
+#FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
 def dump(src, length=16):
 	N=0; result=''
 	while src:
 		s,src = src[:length],src[length:]
 		hexa = ' '.join(["%02X"%ord(x) for x in s])
-		s = s.translate(FILTER)
-		result += "%04X   %-*s   %s\n" % (N, length*3, hexa, s)
+		#s = s.translate(FILTER)
+		#result += "%04X   %-*s   %s\n" % (N, length*3, hexa, s)
+		result += "%04X   %-*s\n" % (N, length*3, hexa)
 		N+=length
 	return result
 
 print(str(sys.argv))
 for opt in sys.argv:
-	print(opt)
 	if opt == '-w':
-		writing_enabled = 1
+		writing_enabled = True
+		print('Writing enabled')
+	if opt == '-d':
+		dump_enabled = True
+		print('Dump enabled')
 
-if writing_enabled:
-	print('Writing enabled')
-else:
-	print('Writing disabled')
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.bind(('<broadcast>', port))
 rc =  s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, bufferSize)
@@ -74,7 +77,8 @@ while True:
 		start = time.time()
 		olddifftime = 0
 	# Process event
-	#print(dumpi(msg))
+	if dump_enabled:
+			print(dump(msg))
 	if sfil and not sfil.closed:
 		sfil.write(msg)
 	difftime = int((time.time() - start))
