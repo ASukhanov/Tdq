@@ -81,7 +81,7 @@ Int_t   Tdq::gCMNLimit = 40;	// this rejects 10% of events
 Int_t   Tdq::gCMNControl = 0;	// &1: call DoCMNoise, &2: subtract CMNoise
 Float_t Tdq::gCMNQuantile = 0.25;
 Int_t	Tdq::gExtraWords = 0;	// For events with simulated data this should be set to 1
-Int_t	Tdq::gStripMapping = 1;	// 1 to map ASIC channel number to sensor strip number
+Int_t	Tdq::gStripMapping = 0;	// 1 to map ASIC channel number to sensor strip number
 Int_t	Tdq::gSubtractPeds = 0; //
 
 void Tdq::Swap(Int_t svx4ch, Int_t stripch)
@@ -230,10 +230,8 @@ Int_t Tdq::FindEOE()
     else
     	nn = fread(&ww, sizeof(ww), 1, fD);//skip CRC to position for next event
     //fpos = ftell(fD);
-    //#ifdef DBG
     //printf("EOE not found. FindEOE=%i excess=%i @ %lx\n",rc,FINDEOE_ROLLBACK-ii,ftell(fD));
     printf("EOE not found. FindEOE=%i skipped %li bytes @ %lx\n",rc,ftell(fD)-fpos,ftell(fD));
-    //#endif
     return rc;
 }
 void	Tdq::FillErr()
@@ -256,8 +254,7 @@ Int_t Tdq::Pad(Int_t channel)
 Int_t Tdq::Process()
 {
     Int_t ii,chain,nn,bytes_per_chip=NCHAINS*(CH_IN_ASIC+1);
-    //#define MAXICH MAXCH+64
-    UShort_t body[MAX_CH_IN_PLANE + 64],nw;
+    UShort_t body[MAXCH+64],nw;
     UChar_t *bbody = (UChar_t*)body;
 	UChar_t byte;
     ULong_t cclk=0;
@@ -382,9 +379,12 @@ Int_t Tdq::Process()
 
 	if(NCHAINS == 1) chain = 0;
 	else
-	    chain = (ii%NCHAINS)^1; //TODO: check logic here
+            //chain = (ii%NCHAINS)^1; //TODO: check logic here
+	    chain = 3-(ii%NCHAINS);
 	if(flchain[chain]==0)
-	    if(fentry<2) {cout<<"chain "<<chain<<" empty "<<channel<<","<<ii<<endl;   continue;}
+	    if(fentry<2) 
+              {//cout<<"chain "<<chain<<" empty "<<channel<<","<<ii<<endl;   
+                 continue;}
 
 	//Skip dead channels
 	if(status[chain][Pad(channel)]==0) 
@@ -400,7 +400,6 @@ Int_t Tdq::Process()
 	
 	/*
 	if(gDebug) {
-	#if DBG > 1
 	if(fentry<2)
 	    if(chain==0)
 	    printf("%i[%02x]=%02x ",chain,channel,bbody[ii]);
@@ -409,8 +408,7 @@ Int_t Tdq::Process()
 		printf("Filling %i %i,%i\n",chain,channel,bbody[ii]);
 		fhchns[chain]->Print();
 	}
-	#endif
-	}//#endif
+	}
 	*/
     }
     if(gCMNControl && DATA_ARE_ADC) 
@@ -544,6 +542,8 @@ Tdq::Tdq(const Char_t *name, Int_t cmnproc_control, const Char_t *htitle)
     fevhl = 0;
     //fchnmap.Set(MAXCH);
     //fchnmap.Reset();
+    if(strlen(name)==0)
+       return;
     if((tname = gSystem->ExpandPathName(name))!=0)
     {
     	strcpy(fname,tname);
@@ -620,38 +620,38 @@ TTree* Tdq::MakeTree(Int_t mode)
 	ftree->Branch("entry",&fentry,"fentry/i");
 	ftree->Branch("fevnasics",&fevnasics,"fevnasics/b");
 	ftree->Branch("celln0",fcelln[0],"fcelln0[fevnasics]/b");
-	//ftree->Branch("celln1",fcelln[1],"fcelln1[fevnasics]/b");
-	//ftree->Branch("celln2",fcelln[2],"fcelln2[fevnasics]/b");
-	//ftree->Branch("celln3",fcelln[3],"fcelln3[fevnasics]/b");
+	ftree->Branch("celln1",fcelln[1],"fcelln1[fevnasics]/b");
+	ftree->Branch("celln2",fcelln[2],"fcelln2[fevnasics]/b");
+	ftree->Branch("celln3",fcelln[3],"fcelln3[fevnasics]/b");
 	ftree->Branch("evsize",(Int_t*)&fevsize,"evsize/s");
 	ftree->Branch("error",(Int_t*)&ferr,"ferr/i");
 	ftree->Branch("evnum",(Int_t*)&fevnum,"fevnum/i");
 	ftree->Branch("fnchn",&fnchn,"fnchn/I");
 	ftree->Branch("chn",fchn,"chn[fnchn]/s");
 	ftree->Branch("f1chain0",&(flchain[0]),"flchain0/I");
-	//ftree->Branch("f1chain1",&(flchain[1]),"flchain1/I");
-	//ftree->Branch("f1chain2",&(flchain[2]),"flchain2/I");
-	//ftree->Branch("f1chain3",&(flchain[3]),"flchain3/I");
+	ftree->Branch("f1chain1",&(flchain[1]),"flchain1/I");
+	ftree->Branch("f1chain2",&(flchain[2]),"flchain2/I");
+	ftree->Branch("f1chain3",&(flchain[3]),"flchain3/I");
 	ftree->Branch("chv0",fchv[0],"fchv0[flchain0]/S");
-	//ftree->Branch("chv1",fchv[1],"fchv1[flchain1]/S");
-	//ftree->Branch("chv2",fchv[2],"fchv2[flchain2]/S");
-	//ftree->Branch("chv3",fchv[3],"fchv3[flchain3]/S");
+	ftree->Branch("chv1",fchv[1],"fchv1[flchain1]/S");
+	ftree->Branch("chv2",fchv[2],"fchv2[flchain2]/S");
+	ftree->Branch("chv3",fchv[3],"fchv3[flchain3]/S");
 	ftree->Branch("hitadcs0",hitadc[0],"hitadc0[flchain0]/F");
-	//ftree->Branch("hitadcs1",hitadc[1],"hitadc1[flchain1]/F");
-	//ftree->Branch("hitadcs2",hitadc[2],"hitadc2[flchain2]/F");
-	//ftree->Branch("hitadcs3",hitadc[3],"hitadc3[flchain3]/F");
+	ftree->Branch("hitadcs1",hitadc[1],"hitadc1[flchain1]/F");
+	ftree->Branch("hitadcs2",hitadc[2],"hitadc2[flchain2]/F");
+	ftree->Branch("hitadcs3",hitadc[3],"hitadc3[flchain3]/F");
 	ftree->Branch("hitn0",hitn[0],"hitn0[fevnasics]/I");
-	//ftree->Branch("hitn1",hitn[1],"hitn1[fevnasics]/I");
-	//ftree->Branch("hitn2",hitn[2],"hitn2[fevnasics]/I");
-	//ftree->Branch("hitn3",hitn[3],"hitn3[fevnasics]/I");
+	ftree->Branch("hitn1",hitn[1],"hitn1[fevnasics]/I");
+	ftree->Branch("hitn2",hitn[2],"hitn2[fevnasics]/I");
+	ftree->Branch("hitn3",hitn[3],"hitn3[fevnasics]/I");
 	ftree->Branch("hitc0",hitc[0],"hitc0[fevnasics]/I");
-	//ftree->Branch("hitc1",hitc[1],"hitc1[fevnasics]/I");
-	//ftree->Branch("hitc2",hitc[2],"hitc2[fevnasics]/I");
-	//ftree->Branch("hitc3",hitc[3],"hitc3[fevnasics]/I");
+	ftree->Branch("hitc1",hitc[1],"hitc1[fevnasics]/I");
+	ftree->Branch("hitc2",hitc[2],"hitc2[fevnasics]/I");
+	ftree->Branch("hitc3",hitc[3],"hitc3[fevnasics]/I");
 	ftree->Branch("cmnn0",fcmnoise[0],"fcmnn0[fevnasics]/s");
-	//ftree->Branch("cmnn1",fcmnoise[1],"fcmnn1[fevnasics]/s");
-	//ftree->Branch("cmnn2",fcmnoise[2],"fcmnn2[fevnasics]/s");
-	//ftree->Branch("cmnn3",fcmnoise[3],"fcmnn3[fevnasics]/s");
+	ftree->Branch("cmnn1",fcmnoise[1],"fcmnn1[fevnasics]/s");
+	ftree->Branch("cmnn2",fcmnoise[2],"fcmnn2[fevnasics]/s");
+	ftree->Branch("cmnn3",fcmnoise[3],"fcmnn3[fevnasics]/s");
 	ftree->Branch("clkphase",(Int_t*)&fclkphase,"fclkphase/b");
 	ftree->Branch("clkdiff",&fclkdiff,"clkdiff/i");
 	ftree->Branch("nerr",(Int_t*)&fnerr,"fnerr/s");

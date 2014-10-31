@@ -8,8 +8,8 @@ Int_t gNEntries=999999;
         
     cout<<"gSystem.Load(""Tdq"")"<<endl;
     gSystem->Load("Tdq");
+    Tdq *gdq=new Tdq();
 
-    Tdq *gdq;
     //gh = new TH2S("adc-chn","",128,0,128,256,0,256);
     gStyle->SetPalette(1);
     
@@ -17,6 +17,12 @@ Int_t gNEntries=999999;
     gROOT->ProcessLine(".L process_file.C");
     
     cout<<"Now you can start the analysis using '.x run.C or .x check_for_file.C()'"<<endl;
+
+    // Set the run-specific globals
+    // The following line may be necessary to account for extra words
+    gdq->gExtraWords = 2;
+    gdg->gDebug = 0;
+    gdg->gStripMapping = 0;
 }
 
 
