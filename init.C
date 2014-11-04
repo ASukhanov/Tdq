@@ -20,9 +20,9 @@ Int_t gNEntries=999999;
 
     // Set the run-specific globals
     // The following line may be necessary to account for extra words
-    gdq->gExtraWords = 2;
-    gdg->gDebug = 0;
-    gdg->gStripMapping = 0;
+    gdq->gExtraWords = 0;
+    gdq->gDebug = 0;
+    gdq->gStripMapping = 0;
 }
 
 

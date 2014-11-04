@@ -272,14 +272,6 @@ Int_t Tdq::Process()
 	printf("READ ERROR in Process @ %lx\n",ftell(fD));
 	return ERRDQ_IO;
     }
-    //fpos = ftell(fD);
-    // Check if trailer is correct
-    if(body[nw-2] != DQ_EOE)
-    {
-        ferr |= ERRDQ_EVSIZE;
-	printf("ERROR ERRDQ_EVSIZE %04x!=%04x @ %08lx\n",body[nw-2],DQ_EOE,ftell(fD));
-	return ERRDQ_EVSIZE;
-    }
     // CRC
     //for(ii=0;ii<nw;ii++) fcrc ^= body[ii];
     UShort_t crch = fcrc,crcb=0,crct=0;
@@ -457,6 +449,13 @@ Int_t Tdq::Process()
 	    fnerr++;
 	    FillErr();
     }
+    // Check if trailer is correct
+    if(body[nw-2] != DQ_EOE)
+    {
+        ferr |= ERRDQ_EVSIZE;
+	printf("ERROR ERRDQ_EVSIZE %04x!=%04x @ %08lx\n",body[nw-2],DQ_EOE,ftell(fD));
+	return ERRDQ_EVSIZE;
+    }
     return 0;
 }
 
@@ -487,7 +486,7 @@ void Tdq::DoCMNoise(Int_t chain)
     for(ic=0;ic<nasics;ic++)
     {
         fcmnoise[chain][ic] =  (TMath::KOrdStat(size, fchv[chain]+ic*CH_IN_ASIC, order, work));
-		if(abs(fcmnoise[chain][ic])>gCMNLimit)
+		if(TMath::Abs(fcmnoise[chain][ic])>gCMNLimit)
         {
 	    if(fcmnoise[chain][ic]==-255) {ferr |= ERRDQ_0CHIP;}
 	    else
