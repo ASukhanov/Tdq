@@ -262,7 +262,8 @@ Int_t Tdq::Process()
     ferr = 0;
     // get body of the event
     //&RA 130903/nw = fevtl + fevnasics*bytes_per_chip/2 +2;// the +2 could be an artifact in the hardware
-    nw = fevtl + fevnasics*bytes_per_chip/2 + 1 + gExtraWords;
+    //nw = fevtl + fevnasics*bytes_per_chip/2 + 1 + gExtraWords;
+    nw = fevtl + fevnasics*bytes_per_chip/2 + gExtraWords;
     if(gDebug) {
     printf("At %lx, Expected nw=%04x, hdr crc=0x%04x\n",ftell(fD),nw,fcrc);
     }//#endif
@@ -371,8 +372,7 @@ Int_t Tdq::Process()
 
 	if(NCHAINS == 1) chain = 0;
 	else
-            //chain = (ii%NCHAINS)^1; //TODO: check logic here
-	    chain = 3-(ii%NCHAINS);
+            chain = (ii%NCHAINS)^1; //Tested for v9E
 	if(flchain[chain]==0)
 	    if(fentry<2) 
               {//cout<<"chain "<<chain<<" empty "<<channel<<","<<ii<<endl;   
