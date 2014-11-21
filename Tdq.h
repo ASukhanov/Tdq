@@ -21,7 +21,7 @@
 #define ERRDQ_STAMP 2
 
 // &RA 20141030//disable this error checking by now
-//#define ERRDQ_CRC 4
+#define ERRDQ_CRC 4
 #define ERRDQ_EVSIZE 8
 #define ERRDQ_NOEOE 0x10	// bit4
 // &RA 20130903//disable this error checking by now

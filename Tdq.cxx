@@ -381,9 +381,10 @@ Int_t Tdq::Process()
 	//Skip dead channels
 	if(status[chain][Pad(channel)]==0) 
 	    if(fentry<2) {cout<<"dead "<<chain<<","<<channel<<endl; continue;}
-
-	int ichip = channel/(CH_IN_ASIC+1);
-	int ich = channel % (CH_IN_ASIC+1);
+        
+	// OPTION below is to exclude the cell numbers from data array
+	int ichip = channel/(CH_IN_ASIC);//OPTION/+1); 
+	int ich = channel % (CH_IN_ASIC);//OPTION/+1);
 	if (gStripMapping) ich = PadNumber[ich];
 	CHV_t chv = (CHV_t)bbody[ii];
 	//if(gSubtractPeds) chv -= ped[chain][channel] + 50;
