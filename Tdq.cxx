@@ -306,7 +306,8 @@ Int_t Tdq::Process()
     fbclk = fhdr[8]*256+fhdr[9];
     fbclkx = bbody[(nw-fevtl+1)*2]*256 + bbody[(nw-fevtl+1)*2+1];
     //fclkphase = fbclkx & 0x7;
-    fclkphase =  bbody[(nw-fevtl+1)*2+1] & 0x7;
+    //&RA/141123/fclkphase =  bbody[(nw-fevtl+1)*2+1] & 0x7;
+    fclkphase =  fhdr[15];	//For firmware FEMr1-vB2 and up
     fbclkx = fbclkx>>3;
     cclk = (fbclkx<<16) | fbclk;
     Long_t clkdiff; 
@@ -382,9 +383,8 @@ Int_t Tdq::Process()
 	if(status[chain][Pad(channel)]==0) 
 	    if(fentry<2) {cout<<"dead "<<chain<<","<<channel<<endl; continue;}
         
-	// OPTION below is to exclude the cell numbers from data array
-	int ichip = channel/(CH_IN_ASIC);//OPTION/+1); 
-	int ich = channel % (CH_IN_ASIC);//OPTION/+1);
+	int ichip = channel/(CH_IN_ASIC+1); 
+	int ich = channel % (CH_IN_ASIC+1);
 	if (gStripMapping) ich = PadNumber[ich];
 	CHV_t chv = (CHV_t)bbody[ii];
 	//if(gSubtractPeds) chv -= ped[chain][channel] + 50;

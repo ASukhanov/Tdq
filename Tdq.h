@@ -70,7 +70,7 @@ private:
 	Int_t module;
 	Int_t nmodule;
 	
-	#define DQ_MINHDR 14
+	#define DQ_MINHDR 20	//&RA/141123/ was 14
 	UChar_t f1sthdr[DQ_MINHDR];
 	UChar_t fhdr[DQ_MINHDR];
 	
