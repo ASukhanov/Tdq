@@ -389,7 +389,7 @@ Int_t Tdq::Process()
 	CHV_t chv = (CHV_t)bbody[ii];
 	//if(gSubtractPeds) chv -= ped[chain][channel] + 50;
 	if(gSubtractPeds) chv -= ped[chain][channel];
-	fchv[chain][ichip*CH_IN_ASIC + ich] = chv;
+	fchv[chain][ichip*(CH_IN_ASIC+1) + ich] = chv;
 	
 	/*
 	if(gDebug) {
