@@ -19,12 +19,19 @@ Int_t gNEntries=999999;
     cout<<"Now you can start the analysis using '.x run.C or .x check_for_file.C()'"<<endl;
 
     // Set the run-specific globals
+    gdq->gDebug = 0;
+
     // The following line may be necessary to account for extra words
     gdq->gExtraWords = 2;
-    gdq->gDebug = 0;
+
+    // if mapping is on then analysis will be in dtector channels space, otherwise - SVX4 space
     gdq->gStripMapping = 0;
 
-	last_file();
+    // Number of events to process
+    gdq->gMaxEntries = 10000000; 
+
+    // Process the newest file
+    // last_file();
 }
 
 

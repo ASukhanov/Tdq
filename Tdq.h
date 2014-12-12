@@ -107,10 +107,12 @@ private:
 	void	DoCMNoise(Int_t chain);
 
   public:
-	static	Int_t gDebug;
+	static Int_t gDebug;
 	static Int_t gExtraWords;
 	static Int_t gStripMapping;
 	static Int_t gSubtractPeds;
+        static Int_t gMaxEntries;
+
 	void FillErr();
 	TH1I *fherr;
 	TArrayI fchnmap;

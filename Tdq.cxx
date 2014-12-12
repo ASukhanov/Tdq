@@ -28,17 +28,17 @@ Now the detecttion of empty events is broken
  2014-03-17	AS
 *  - ASICS_IN_CHAIN changed to 12, added Pad(), corrected number of channels in chain
 
-TODO:
-  add fevnum difference in the tree
+ 2014-12-12as
+*  - gMaxEntries
 
 TODO:
-  does not work if ASICS_IN_CHAIN=12
+  add fevnum difference in the tree
 
 */
 
 #include "globals.h"
 
-//&RA/131108/ Instead of recompiling for DBG, use gDebug memmber.
+//&RA/131108/ Instead of recompiling for DBG, use gDebug member.
 // To use it in root instantiate 'side' Tdq just to access its static member gDebug
 // i.e. Tdq* gg = new Tdq(""); and then manipulate gg.gDebug
 // Uncomment the next line for debugging, if DBG>1 the printout will be very intense
@@ -77,12 +77,14 @@ using namespace TMath;
 
 Int_t Tdq::gDebug=0;
 Int_t dbg_cmnoise=0;
+
 Int_t   Tdq::gCMNLimit = 40;	// this rejects 10% of events
 Int_t   Tdq::gCMNControl = 0;	// &1: call DoCMNoise, &2: subtract CMNoise
 Float_t Tdq::gCMNQuantile = 0.25;
 Int_t	Tdq::gExtraWords = 0;	// For events with simulated data this should be set to 1
 Int_t	Tdq::gStripMapping = 0;	// 1 to map ASIC channel number to sensor strip number
 Int_t	Tdq::gSubtractPeds = 0; //
+Int_t	Tdq::gMaxEntries = 10000000; // Number of events to process
 
 void Tdq::Swap(Int_t svx4ch, Int_t stripch)
 {
@@ -663,11 +665,10 @@ TTree* Tdq::MakeTree(Int_t mode)
     ferrcount = 0;
    
 	//printf("Event loop\n");
-    Int_t maxEntry = 1000000;
     if(gDebug) {
-	    maxEntry = 20;
+	    gMaxEntries = 20;
     }
-    for(fentry=0;fentry<maxEntry;fentry++)
+    for(fentry=0;fentry<gMaxEntries;fentry++)
     {
 		if(Next()<0) break;
 		if((fentry%100)==0) printf("nev=%i,nerr=%li,err=%08lx\n",fentry,ferrcount,ferr);
