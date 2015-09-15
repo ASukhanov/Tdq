@@ -28,17 +28,17 @@ Now the detecttion of empty events is broken
  2014-03-17	AS
 *  - ASICS_IN_CHAIN changed to 12, added Pad(), corrected number of channels in chain
 
-TODO:
-  add fevnum difference in the tree
+ 2014-12-12as
+*  - gMaxEntries
 
 TODO:
-  does not work if ASICS_IN_CHAIN=12
+  add fevnum difference in the tree
 
 */
 
 #include "globals.h"
 
-//&RA/131108/ Instead of recompiling for DBG, use gDebug memmber.
+//&RA/131108/ Instead of recompiling for DBG, use gDebug member.
 // To use it in root instantiate 'side' Tdq just to access its static member gDebug
 // i.e. Tdq* gg = new Tdq(""); and then manipulate gg.gDebug
 // Uncomment the next line for debugging, if DBG>1 the printout will be very intense
@@ -77,12 +77,14 @@ using namespace TMath;
 
 Int_t Tdq::gDebug=0;
 Int_t dbg_cmnoise=0;
+
 Int_t   Tdq::gCMNLimit = 40;	// this rejects 10% of events
 Int_t   Tdq::gCMNControl = 0;	// &1: call DoCMNoise, &2: subtract CMNoise
 Float_t Tdq::gCMNQuantile = 0.25;
 Int_t	Tdq::gExtraWords = 0;	// For events with simulated data this should be set to 1
 Int_t	Tdq::gStripMapping = 0;	// 1 to map ASIC channel number to sensor strip number
 Int_t	Tdq::gSubtractPeds = 0; //
+Int_t	Tdq::gMaxEntries = 10000000; // Number of events to process
 
 void Tdq::Swap(Int_t svx4ch, Int_t stripch)
 {
@@ -121,7 +123,7 @@ Int_t Tdq::UpdateCRC(UShort_t *crc, UShort_t* ptrs, Int_t len)
     for(ii=0;ii<len;ii++) *crc ^= *ptrs++;
     return 0;
 }
-#define DATA_ARE_ADC ((f1sthdr[2])&0x80)
+#define DATA_ARE_ADC !((f1sthdr[6])&0x80) //&RA150914
 
 Int_t Tdq::GetHeader()
 {
@@ -129,6 +131,8 @@ Int_t Tdq::GetHeader()
     //UChar_t hdr[DQ_MINHDR];
     UShort_t ww;
     fpos = ftell(fD);
+    if (fread(&frec_length, sizeof(frec_length), 1, fD) !=1) return ERRDQ_IO;
+    //printf("frec_length = %08x\n",frec_length);
     Int_t nitems = fread(fhdr, sizeof(fhdr), 1, fD);
     if(nitems!=1) return ERRDQ_IO;
     if(gDebug) {
@@ -136,10 +140,10 @@ Int_t Tdq::GetHeader()
     for(ii=0;ii<(Int_t)sizeof(fhdr);ii++) printf("%02x ",fhdr[ii]);
     printf("\n");
     }//#endif
-    if((fhdr[4] != 0xf0) || (fhdr[5] != 0xc1)) 
+    if((fhdr[4] != 0xf0) || (fhdr[5] != 0xc2)) 
     {
 	ferr |= ERRDQ_STAMP;
-	if(ferrcount<MAXERRPRINT)printf("ERRDQ_STAMP %02x%02x != F0C1 @ %08lx\n",fhdr[4],fhdr[5],fpos);
+	if(ferrcount<MAXERRPRINT)printf("ERRDQ_STAMP %02x%02x != F0C2 @ %08lx\n",fhdr[4],fhdr[5],fpos);
 	FillErr();
 	return ferr;
     }
@@ -153,8 +157,9 @@ Int_t Tdq::GetHeader()
 	//estimate event length
 	fevhl = f1sthdr[11]&0xf;
 	fevtl = ((f1sthdr[11])>>4)&0xf;
-	fevnasics = ((f1sthdr[3])>>4)&0xf;
-	fevchains = f1sthdr[3]&0xf;
+	//&RA150914/fevnasics = ((f1sthdr[3])>>4)&0xf;
+	fevnasics = 12;
+	fevchains = f1sthdr[6]&0xf;
 	ii = fevnasics*(CH_IN_ASIC+1);
 	printf("header constructed hl=%i, tl=%i, vers=%02x, na=%i, chain_flag=0x%1x[%i], data are ",
 		fevhl,fevtl,f1sthdr[10],fevnasics,fevchains,ii);
@@ -263,7 +268,8 @@ Int_t Tdq::Process()
     // get body of the event
     //&RA 130903/nw = fevtl + fevnasics*bytes_per_chip/2 +2;// the +2 could be an artifact in the hardware
     //nw = fevtl + fevnasics*bytes_per_chip/2 + 1 + gExtraWords;
-    nw = fevtl + fevnasics*bytes_per_chip/2 + gExtraWords;
+    //&RA 150914/nw = fevtl + fevnasics*bytes_per_chip/2 + gExtraWords;
+    nw = (frec_length - sizeof(fhdr))/sizeof(Short_t);
     if(gDebug) {
     printf("At %lx, Expected nw=%04x, hdr crc=0x%04x\n",ftell(fD),nw,fcrc);
     }//#endif
@@ -398,7 +404,7 @@ Int_t Tdq::Process()
 	    printf("%i[%02x]=%02x ",chain,channel,bbody[ii]);
 	if(fhchns[chain])
 	{
-		printf("Filling %i %i,%i\n",chain,channel,bbody[ii]);
+		printf("Filling %x %x,%x\n",chain,channel,bbody[ii]);
 		fhchns[chain]->Print();
 	}
 	}
@@ -663,11 +669,10 @@ TTree* Tdq::MakeTree(Int_t mode)
     ferrcount = 0;
    
 	//printf("Event loop\n");
-    Int_t maxEntry = 1000000;
     if(gDebug) {
-	    maxEntry = 20;
+	    gMaxEntries = 20;
     }
-    for(fentry=0;fentry<maxEntry;fentry++)
+    for(fentry=0;fentry<gMaxEntries;fentry++)
     {
 		if(Next()<0) break;
 		if((fentry%100)==0) printf("nev=%i,nerr=%li,err=%08lx\n",fentry,ferrcount,ferr);

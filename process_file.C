@@ -184,7 +184,7 @@ void tdq_evsize(Int_t number_of_modules_in_chain=1)
 	cout<<"Copy&paste the following dgbox command to change event size for "<<number_of_modules_in_chain<<" modules in chain"<<endl;
 	cout<<".set daq_evsize "<<(26+516*number_of_modules_in_chain)<<endl;
 }
-void last_file()
+void newest_file()
 {
 	FILE  *pipe = gSystem->OpenPipe("ls -t ~/data/*.dq4 | head -1","r");
 	TString d;

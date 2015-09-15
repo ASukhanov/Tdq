@@ -25,7 +25,7 @@
 #define ERRDQ_EVSIZE 8
 #define ERRDQ_NOEOE 0x10	// bit4
 // &RA 20130903//disable this error checking by now
-//#define ERRDQ_CELLN 0x20	// bit5
+#define ERRDQ_CELLN 0x20	// bit5
 #define ERRDQ_CMNOISE 0x40	// bit6
 #define ERRDQ_0CHIP 0x80	// but7
 #define ERRDQ_FCELLN_0 0x100	//bit8
@@ -73,6 +73,7 @@ private:
 	#define DQ_MINHDR 20	//&RA/141123/ was 14
 	UChar_t f1sthdr[DQ_MINHDR];
 	UChar_t fhdr[DQ_MINHDR];
+	UInt_t frec_length;
 	
 	//elements of the tree
 	ULong_t fpos; // file position	
@@ -107,10 +108,12 @@ private:
 	void	DoCMNoise(Int_t chain);
 
   public:
-	static	Int_t gDebug;
+	static Int_t gDebug;
 	static Int_t gExtraWords;
 	static Int_t gStripMapping;
 	static Int_t gSubtractPeds;
+        static Int_t gMaxEntries;
+
 	void FillErr();
 	TH1I *fherr;
 	TArrayI fchnmap;
