@@ -24,8 +24,7 @@
 #define ERRDQ_CRC 4
 #define ERRDQ_EVSIZE 8
 #define ERRDQ_NOEOE 0x10	// bit4
-// &RA 20130903//disable this error checking by now
-#define ERRDQ_CELLN 0x20	// bit5
+// &RA 20130903//disable this error checking by now//#define ERRDQ_CELLN 0x20	// bit5
 #define ERRDQ_CMNOISE 0x40	// bit6
 #define ERRDQ_0CHIP 0x80	// but7
 #define ERRDQ_FCELLN_0 0x100	//bit8
@@ -69,36 +68,42 @@ private:
 	Int_t hitc[NCHAINS][MAX_STRIP_IN_PLANE];
 	Int_t module;
 	Int_t nmodule;
-	
+
 	#define DQ_MINHDR 20	//&RA/141123/ was 14
 	UChar_t f1sthdr[DQ_MINHDR];
 	UChar_t fhdr[DQ_MINHDR];
 	UInt_t frec_length;
-	
+
 	//elements of the tree
-	ULong_t fpos; // file position	
+	ULong_t fpos; // file position
 	UShort_t fcrc;
 	UChar_t fevhl,fevtl;
 	UChar_t fevnasics,fevchains;
         Int_t	fentry;
 	UChar_t fcelln[NCHAINS][6]; // bunch number
-	UShort_t fbclk, fbclkx;
+	ULong_t fbclk, fbclkx;
 	UShort_t fPARst_ExTrig; // time (in bclk*8) from preamp reset to external trigger, the bits [2:0] also could be used as clockphase of the ExTrig
 	UChar_t fclkphase; // clock phase of the trigger 0:7
-	ULong_t fevsize;    // event length		
+        UShort_t fHPARTime;
+        UShort_t fHL1Stack;
+        UShort_t fHDigTime;
+        UShort_t fHFStatus;
+        UShort_t fHPrevL1;
+
+	ULong_t fevsize;    // event length
 	ULong_t ferr;   // error. each bit has its meaning
 	ULong_t ferrcount; // number off error events
 	Int_t	fnerr;	// number of errors in event
 	ULong_t fclkprev;
 	ULong_t fclkdiff;
 	//ULong_t ftimediff,fprevtime; // time difference with prev event
-	//ULong_t ftime80MHz;	// 80MHz timer counter, reset by external signal 
+	//ULong_t ftime80MHz;	// 80MHz timer counter, reset by external signal
 	//ULong_t ftime80MHzDiff, fprevtime8;
 	TH2S *fhchns[NCHAINS];
 	static Float_t gCMNQuantile;
 	static Int_t gCMNLimit;
 	static Int_t gCMNControl;
-	
+
 	UChar_t Bin2Gray(UChar_t gray);
 	Int_t GetHeader();
 	Int_t FindEOE(); // position file to next event

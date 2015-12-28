@@ -1,11 +1,11 @@
 /*
     2013-09-11	Andrey Sukhanov
-    
+
     *version 3 Analysis package for *.dq4 files, adopted from previous year.
     added PARst_ExTrig - delay between PARst and the external trigger
 
     2013-10-31	AS
-*  - Binning of fhchns corrected xrange changed to 0,256. 
+*  - Binning of fhchns corrected xrange changed to 0,256.
 *  - Printing FPGA version.
 *  - hex position for 'EOE not found'
 
@@ -31,9 +31,8 @@ Now the detecttion of empty events is broken
  2014-12-12as
 *  - gMaxEntries
 
-TODO:
-  add fevnum difference in the tree
-
+ 2015-12-24 AS
+* Event format of FEM-v200+
 */
 
 #include "globals.h"
@@ -48,7 +47,7 @@ TODO:
 #define MAXERRPRINT 1000000
 //#else
 //#define MAXERRPRINT 4
-//#endif 
+//#endif
 
 // for ntohl
 //#ifndef WIN32
@@ -67,6 +66,7 @@ TODO:
 #include <sstream>
 #include <iostream>
 #include <sys/stat.h> // for stat()
+#include <arpa/inet.h> //for ntohs()
 
 using namespace std;
 using namespace TMath;
@@ -100,7 +100,6 @@ void Tdq::SetPed(Int_t chain, Int_t ich, Float_t pedestal, Int_t stats)
 	ped[chain][ich]=pedestal;
 	status[chain][ich]=stats;
 	}
-	
 }
 
 void Tdq::SetCMNoiseControl(Int_t value)
@@ -258,12 +257,13 @@ Int_t Tdq::Pad(Int_t channel)
 }
 Int_t Tdq::Process()
 {
-    Int_t ii,chain,nn,bytes_per_chip=NCHAINS*(CH_IN_ASIC+1);
+    Int_t ii,chain,nn;
     UShort_t body[MAXCH+64],nw;
     UChar_t *bbody = (UChar_t*)body;
 	UChar_t byte;
     ULong_t cclk=0;
-    
+    UShort_t *phdr = (UShort_t *) &(fhdr[0]);
+
     ferr = 0;
     // get body of the event
     //&RA 130903/nw = fevtl + fevnasics*bytes_per_chip/2 +2;// the +2 could be an artifact in the hardware
@@ -286,11 +286,11 @@ Int_t Tdq::Process()
     UpdateCRC(&crct,body+nw-fevtl,fevtl);
     fcrc ^= crcb ^ crct;
     if(gDebug) {
-    printf("crc=%04x (h,b,t=%04x,%04x,%04x), top/bottom:\n",fcrc,crch,crcb,crct);
-    for(ii=0;ii<16;ii++) printf("%04x ",body[ii]);
-    printf("\n");
-    for(ii=nw-16;ii<nw;ii++) printf("%04x ",body[ii]);
-    printf("\n");
+      printf("crc=%04x (h,b,t=%04x,%04x,%04x), top/bottom:\n",fcrc,crch,crcb,crct);
+      for(ii=0;ii<16;ii++) printf("%04x ",body[ii]);
+      printf("\n");
+      for(ii=nw-16;ii<nw;ii++) printf("%04x ",body[ii]);
+      printf("\n");
     }//#endif
     #ifdef ERRDQ_CRC
     if(fcrc) {ferr |= ERRDQ_CRC;}
@@ -306,26 +306,27 @@ Int_t Tdq::Process()
     #endif // ERRDQ_CRC
 
    // event should be OK, fill the members
-    fevnum = fhdr[0]*256+fhdr[1];
+    fevnum = ntohs(phdr[0]);
     fevsize = (fevhl + nw)*2;
     //fcelln = Bin2Gray(bbody[3]);
-    fbclk = fhdr[8]*256+fhdr[9];
-    fbclkx = bbody[(nw-fevtl+1)*2]*256 + bbody[(nw-fevtl+1)*2+1];
-    //fclkphase = fbclkx & 0x7;
-    //&RA/141123/fclkphase =  bbody[(nw-fevtl+1)*2+1] & 0x7;
-    fclkphase =  fhdr[15];	//For firmware FEMr1-vB2 and up
-    fbclkx = fbclkx>>3;
-    cclk = (fbclkx<<16) | fbclk;
-    Long_t clkdiff; 
+    //printf("ph4=%04x->%04x ph7=%04x->%04x\n",phdr[4],ntohs(phdr[4]),phdr[7],ntohs(phdr[7]));
+    fbclk = ntohs(phdr[4]) + (((ntohs(phdr[7])>>4)&0xfff)<<16);
+    fclkphase = fhdr[7]&0x7;
+    cclk = fbclk;
+    Long_t clkdiff;
     clkdiff=cclk-fclkprev;
     fclkprev = cclk;
     if(clkdiff<0) clkdiff += 16777216; // add 2^24 if overflow
     if(fentry>0) fclkdiff = clkdiff;
-    fPARst_ExTrig = bbody[(nw-fevtl)*2]*256 + bbody[(nw-fevtl)*2+1];
+    fHPARTime = ntohs(phdr[6]);
+    fHL1Stack = (ntohs(phdr[1])>>12)&0xf;
+    fHDigTime = (ntohs(phdr[1]))&0xfff;
+    fHFStatus = (ntohs(phdr[8])>>12)&0xf;
+    fHPrevL1 = ntohs(phdr[9]);
     if(gDebug) {
     for(ii=0;ii<16;ii++) printf("%02x ",bbody[ii]);
-    printf("\nbclk=%04x, x=%04x, phase=%04x, diff=%li:, cc=%li\n",
-	   fbclk,fbclkx,fclkphase,fclkdiff,cclk);
+    printf("\nbclk=%08lx, phase=%04x, pt=%04x, l1p=%04x, dt=%04x, hfs=%04x, pl1=%04x, diff=%li:, cc=%li\n",
+	   fbclk,fclkphase,fHPARTime,fHL1Stack,fHDigTime,fHFStatus,fHPrevL1,fclkdiff,cclk);
     }//#endif
     if(DATA_ARE_ADC)
     {
@@ -388,7 +389,6 @@ Int_t Tdq::Process()
 	//Skip dead channels
 	if(status[chain][Pad(channel)]==0) 
 	    if(fentry<2) {cout<<"dead "<<chain<<","<<channel<<endl; continue;}
-        
 	int ichip = channel/(CH_IN_ASIC+1); 
 	int ich = channel % (CH_IN_ASIC+1);
 	if (gStripMapping) ich = PadNumber[ich];
@@ -396,7 +396,6 @@ Int_t Tdq::Process()
 	//if(gSubtractPeds) chv -= ped[chain][channel] + 50;
 	if(gSubtractPeds) chv -= ped[chain][channel];
 	fchv[chain][ichip*(CH_IN_ASIC+1) + ich] = chv;
-	
 	/*
 	if(gDebug) {
 	if(fentry<2)
@@ -451,8 +450,8 @@ Int_t Tdq::Process()
     }//#endif
     //fpos = ftell(fD);
     if(ftree) ftree->Fill();
-    if(ferr) 
-    { 
+    if(ferr)
+    {
 	    fnerr++;
 	    FillErr();
     }
@@ -661,13 +660,15 @@ TTree* Tdq::MakeTree(Int_t mode)
 	ftree->Branch("clkphase",(Int_t*)&fclkphase,"fclkphase/b");
 	ftree->Branch("clkdiff",&fclkdiff,"clkdiff/i");
 	ftree->Branch("nerr",(Int_t*)&fnerr,"fnerr/s");
-	ftree->Branch("bclk",&fbclk,"bclk/s");
-	ftree->Branch("bclkx",&fbclkx,"bclkx/s");
-	ftree->Branch("PARst_ExTrig",&fPARst_ExTrig,"PARst_ExTrig/s");
+	ftree->Branch("bclk",&fbclk,"bclk/I");
+        ftree->Branch("hPARTime",&fHPARTime,"hPARTime/S");
+        ftree->Branch("hL1Stack",&fHL1Stack,"hL1Stack/S");
+        ftree->Branch("hDigTime",&fHDigTime,"hDigTime/S");
+        ftree->Branch("hFStatus",&fHFStatus,"hFStatus/S");
+        ftree->Branch("hPrevL1",&fHPrevL1,"hPrevL1/S");
     }
     fevcount = 0;
     ferrcount = 0;
-   
 	//printf("Event loop\n");
     if(gDebug) {
 	    gMaxEntries = 20;
