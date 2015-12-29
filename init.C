@@ -5,18 +5,18 @@ Int_t gRunInProgress = 0;
 //TCanvas *gc1;
 Int_t gFirstEntry=1;
 Int_t gNEntries=999999;
-        
+
     cout<<"gSystem.Load(""Tdq"")"<<endl;
     gSystem->Load("Tdq");
     Tdq *gdq=new Tdq();
 
     //gh = new TH2S("adc-chn","",128,0,128,256,0,256);
     gStyle->SetPalette(1);
-    
+
     //load script to be called by run.C
     gROOT->ProcessLine(".L process_file.C");
-    
-    cout<<"Now you can start the analysis using '.x run.C or .x check_for_file.C()'"<<endl;
+
+    //obsolete//cout<<"Now you can start the analysis using '.x run.C or .x check_for_file.C()'"<<endl;
 
     // Set the run-specific globals
     gdq->gDebug = 0;
@@ -28,7 +28,7 @@ Int_t gNEntries=999999;
     gdq->gStripMapping = 0;
 
     // Number of events to process
-    gdq->gMaxEntries = 10000000; 
+    gdq->gMaxEntries = 100;
 
     // Process the newest file
     // last_file();
