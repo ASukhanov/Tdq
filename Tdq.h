@@ -24,7 +24,8 @@
 #define ERRDQ_CRC 4
 #define ERRDQ_EVSIZE 8
 #define ERRDQ_NOEOE 0x10	// bit4
-// &RA 20130903//disable this error checking by now//#define ERRDQ_CELLN 0x20	// bit5
+// &RA 20130903//disable this error checking by now//
+#define ERRDQ_CELLN 0x20	// bit5
 #define ERRDQ_CMNOISE 0x40	// bit6
 #define ERRDQ_0CHIP 0x80	// but7
 #define ERRDQ_FCELLN_0 0x100	//bit8
@@ -51,6 +52,7 @@ private:
 	Int_t	fsize;
 	Int_t	fevcount;
 	UInt_t	fevnum;
+        Int_t   fNSkippedEvents;
 	Int_t	fnchn; // length of the longest chain
 	UShort_t	fchn[MAX_CH_IN_PLANE];
 	Int_t flchain[NCHAINS];

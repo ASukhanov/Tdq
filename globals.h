@@ -7,7 +7,8 @@
 #define NCHAINS 4
 #define CH_IN_ASIC 128
 #define CH_EXTRABYTES 1 // for FOCAL it was 1
-#define ASICS_IN_CHAIN 13
+//#define ASICS_IN_CHAIN 12 //for MPCEX
+#define ASICS_IN_CHAIN 4 //for SiTracker
 #define MAXCH NCHAINS*ASICS_IN_CHAIN*CH_IN_ASIC
 
 //#undef SWAP	//to work with SVX channel numbers

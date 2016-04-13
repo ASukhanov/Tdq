@@ -44,7 +44,8 @@ Now the detecttion of empty events is broken
 //#define DBG 1
 
 //#ifdef DBG
-#define MAXERRPRINT 1000000
+//#define MAXERRPRINT 10000
+#define MAXERRPRINT 100
 //#else
 //#define MAXERRPRINT 4
 //#endif
@@ -157,7 +158,7 @@ Int_t Tdq::GetHeader()
 	fevhl = f1sthdr[11]&0xf;
 	fevtl = ((f1sthdr[11])>>4)&0xf;
 	//&RA150914/fevnasics = ((f1sthdr[3])>>4)&0xf;
-	fevnasics = 12;
+	fevnasics = ASICS_IN_CHAIN;
 	fevchains = f1sthdr[6]&0xf;
 	ii = fevnasics*(CH_IN_ASIC+1);
 	printf("header constructed hl=%i, tl=%i, vers=%02x, na=%i, chain_flag=0x%1x[%i], data are ",
@@ -255,9 +256,11 @@ Int_t Tdq::Pad(Int_t channel)
 {
 	return channel/(CH_IN_ASIC+1)*CH_IN_ASIC + channel%(CH_IN_ASIC+1);
 }
+UShort_t gPrevEvNum = 0;
 Int_t Tdq::Process()
 {
     Int_t ii,chain,nn;
+    Int_t bytes_per_chip=NCHAINS*(CH_IN_ASIC+1);
     UShort_t body[MAXCH+64],nw;
     UChar_t *bbody = (UChar_t*)body;
 	UChar_t byte;
@@ -307,6 +310,10 @@ Int_t Tdq::Process()
 
    // event should be OK, fill the members
     fevnum = ntohs(phdr[0]);
+    if(fentry<=0) gPrevEvNum = fevnum;
+    fNSkippedEvents = fevnum - gPrevEvNum;
+    if (fNSkippedEvents<0) fNSkippedEvents += 65536;
+    gPrevEvNum = fevnum;
     fevsize = (fevhl + nw)*2;
     //fcelln = Bin2Gray(bbody[3]);
     //printf("ph4=%04x->%04x ph7=%04x->%04x\n",phdr[4],ntohs(phdr[4]),phdr[7],ntohs(phdr[7]));
@@ -631,6 +638,7 @@ TTree* Tdq::MakeTree(Int_t mode)
 	ftree->Branch("evsize",(Int_t*)&fevsize,"evsize/s");
 	ftree->Branch("error",(Int_t*)&ferr,"ferr/i");
 	ftree->Branch("evnum",(Int_t*)&fevnum,"fevnum/i");
+        ftree->Branch("fNSkippedEvents",&fNSkippedEvents,"fNSkippedEvents/i");
 	ftree->Branch("fnchn",&fnchn,"fnchn/I");
 	ftree->Branch("chn",fchn,"chn[fnchn]/s");
 	ftree->Branch("f1chain0",&(flchain[0]),"flchain0/I");
@@ -661,11 +669,11 @@ TTree* Tdq::MakeTree(Int_t mode)
 	ftree->Branch("clkdiff",&fclkdiff,"clkdiff/i");
 	ftree->Branch("nerr",(Int_t*)&fnerr,"fnerr/s");
 	ftree->Branch("bclk",&fbclk,"bclk/I");
-        ftree->Branch("hPARTime",&fHPARTime,"hPARTime/S");
-        ftree->Branch("hL1Stack",&fHL1Stack,"hL1Stack/S");
-        ftree->Branch("hDigTime",&fHDigTime,"hDigTime/S");
-        ftree->Branch("hFStatus",&fHFStatus,"hFStatus/S");
-        ftree->Branch("hPrevL1",&fHPrevL1,"hPrevL1/S");
+        ftree->Branch("hPARTime",&fHPARTime,"hPARTime/s");
+        ftree->Branch("hL1Stack",&fHL1Stack,"hL1Stack/s");
+        ftree->Branch("hDigTime",&fHDigTime,"hDigTime/s");
+        ftree->Branch("hFStatus",&fHFStatus,"hFStatus/s");
+        ftree->Branch("hPrevL1",&fHPrevL1,"hPrevL1/s");
     }
     fevcount = 0;
     ferrcount = 0;

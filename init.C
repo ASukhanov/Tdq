@@ -3,8 +3,8 @@ TTree *gTree;
 Int_t gRunInProgress = 0;
 //TCanvas c1("c1","Amplitudes");
 //TCanvas *gc1;
-Int_t gFirstEntry=1;
-Int_t gNEntries=999999;
+//Int_t gFirstEntry=1;
+//Int_t gNEntries=999999;
 
     cout<<"gSystem.Load(""Tdq"")"<<endl;
     gSystem->Load("Tdq");
@@ -28,7 +28,7 @@ Int_t gNEntries=999999;
     gdq->gStripMapping = 0;
 
     // Number of events to process
-    gdq->gMaxEntries = 100;
+    gdq->gMaxEntries = 1000;
 
     // Process the newest file
     // last_file();
