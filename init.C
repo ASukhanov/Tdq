@@ -28,7 +28,7 @@ Int_t gRunInProgress = 0;
     gdq->gStripMapping = 0;
 
     // Number of events to process
-    gdq->gMaxEntries = 1000;
+    gdq->gMaxEntries = 10000;
 
     // Process the newest file
     // last_file();
