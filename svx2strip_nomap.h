@@ -1,6 +1,8 @@
-// No-map mapping, only removes the cell numbers out of stream
-// 2014-07-30
-int PadNumber[129] = {
+// No-map mapping,
+// v1 2014-07-30 starts with 0,0, to overwrite the cell number
+// v2 2016-05-05 one-to-one, length changed to 130, to deal with a zero word at the end of SVX
+int PadNumber[130] = 
+{
   0, // the cell number will be overwritten
   0,   1,   2,   3,   4,   5,   6,   7,   8,   9, 
  10,  11,  12,  13,  14,  15,  16,  17,  18,  19, 
@@ -14,5 +16,5 @@ int PadNumber[129] = {
  90,  91,  92,  93,  94,  95,  96,  97,  98,  99, 
 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 
 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 
-120, 121, 122, 123, 124, 125, 126, 127
+120, 121, 122, 123, 124, 125, 126, 127 ,128
 };

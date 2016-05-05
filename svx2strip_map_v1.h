@@ -1,6 +1,10 @@
 // SVX channels to strip number conversion for SpRC-V6 board
-// Version v3 2016-05-04 
-int PadNumber[129] = {
+// Version v3 2016-05-04. length changed to 130, to deal with a zero word at the end of SVX
+// 
+// The mapping is explained here:
+//   https://drive.google.com/open?id=1cxrJaQrLNk-meLh4VLf1U1MAqK4-ICg2xYqPtIctDSE
+// 
+int PadNumber[130] = {
 0, // the cell number will be overwritten
 32,
  33,
@@ -25,7 +29,7 @@ int PadNumber[129] = {
 22,
  43,
 21,
- 44
+ 44,
 20,
  45,
 19,
@@ -67,7 +71,7 @@ int PadNumber[129] = {
 1,
  64,
 0,
- 65
+ 65,
 127,
  66,
 126,
@@ -129,5 +133,6 @@ int PadNumber[129] = {
 98,
  95,
 97,
- 96
+ 96,
+128
 };

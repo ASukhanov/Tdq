@@ -6,11 +6,10 @@
 // PROCESS_MODE 0 
 // Generates only summary histograms
 
-	//COMMON_MODE_NOSE_PROCESSING
-	//nonzero: process common mode moise, 
-	//&2: subtract common mode noise
-//&RA/120314/#define COMMON_MODE_NOSE_PROCESSING 1
-#define COMMON_MODE_NOSE_PROCESSING 0
+//COMMON_MODE_NOSE_PROCESSING
+//nonzero: process common mode moise, 
+//2: subtract common mode noise
+//#define COMMON_MODE_NOSE_PROCESSING -1
 
 /*
 //#include "n3c.h"
@@ -39,12 +38,12 @@ Char_t *tdq_run_name()
 	ss = ss(i2,ss.Last('.')-i2);
 	return ss.Data();
 }
-Int_t process_file(TString txt, Int_t cmnproc=0)
+Int_t process_file(TString txt, Int_t cmnproc=-1)
 {
 
 	Int_t maxch=0,ii,in,chain;
 	char txtline[256];
-	if(cmnproc==-1) cmnproc=COMMON_MODE_NOSE_PROCESSING; //default processing
+	//if(cmnproc==-1) cmnproc=COMMON_MODE_NOSE_PROCESSING; //default processing
 
 	//cout<<txt<<"("<<txt.Length()<<")"<<endl;
 	
@@ -63,65 +62,31 @@ Int_t process_file(TString txt, Int_t cmnproc=0)
 	cout<<endl;
 	//cout<<"CmnProc="<<(gdq->gCMNControl)<<endl;
 	
-#ifdef PEDESTAL_PROCESSING
-//Set pedestal value for each channel in each plane
-		cout<<"Processing pedestals"<<endl;
-       		ifstream pedin("pedestals.txt");
-   		string line2;
-
-   		 while (getline(pedin, line2)) {
-       		        istringstream tokenizer(line2);
-        		string token2;
-
-        		getline(tokenizer, token2, ',');
-        		istringstream int_iss(token2);
-        		Int_t chain;
-        		int_iss >> chain;
-        		//cout<<"chain: 	"<<chain<<endl;
-
-        		getline(tokenizer, token2, ',');
-        		istringstream int_isss(token2);
-        		Int_t channel;
-        		int_isss >> channel;
-        		//cout<<"channel: "<<channel<<endl;
-
-			getline(tokenizer, token2, ',');
-        		istringstream float_issss(token2);
-        		Float_t pedestal;
-        		float_issss >> pedestal;
-        		//cout<<"pedestal: "<<pedestal<<endl;
-				
-			getline(tokenizer, token2, ',');
-        		istringstream float_issss(token2);
-        		Float_t pedrms;
-        		float_issss >> pedrms;
-        		//cout<<"rms: "<<pedrms<<endl;
-
-			getline(tokenizer, token2, ',');
-        		istringstream int_isssss(token2);
-        		Int_t status;
-        		int_isssss >> status;
-        		//cout<<"status: "<<status<<endl;
-
-			gdq->SetPed(chain,channel,pedestal,status);
-				       	  }
-#else
     cout<<"Zero pedestals"<<endl;
     for(int ichain=0;ichain<NCHAINS;ichain++)
     {
 	for(int ich=0;ich<MAXCH;ich++) gdq->SetPed(ichain,ich,0,1);
     }
-#endif//	PEDPROC
 	if(gdq->gSubtractPeds)
 	{
 	    cout<<"Processing pedestals"<<endl;
-	    ifstream fin("pedestals.txt");
 	    TString tl;
 	    TString tok;
+            TString pref = "peds_hchain";
+            TString suff = ".txt";
+            TString fn="";
+            ifstream fin;
 	    string line;
-	    Int_t iy=-1,ix=-2,ii=0;
-	    while(getline(fin, line))
-	    {
+	    Int_t iy=-1,ix=-2,ii=0,jj=0;
+            for (jj=0;jj<2;jj++)
+            {
+              ii = 0;
+              fn = pref;
+              fn += jj;
+              fn += suff;
+              fin.open(fn);
+	      while(getline(fin, line))
+	      {
 		    ix=0;
 		    tl = TString(line);
 		    tl.Tokenize(tok,ix,"\t");
@@ -131,10 +96,17 @@ Int_t process_file(TString txt, Int_t cmnproc=0)
 		    if(tok.IsDec())    iy = tok.Atoi();
 		    else break;
 		    //if (ii<10) cout<<ii<<":"<<iy<<endl;
-		    gdq->SetPed(0,ii,iy,1);	// 2014-07-31. only first chain is processed.
+		    gdq->SetPed(jj,ii,iy,1);
 		    ii++;
-	    }
-	    cout<<"Set "<<ii<<" pedestals from pedestals.txt to chain0"<<endl;
+	      }
+              fin.close();
+              if(ii==0)
+              {
+                cout<<"ERROR. No pedestals from file "<<fn<<endl;
+                exit(1)
+              }
+	      cout<<"Set "<<ii<<" pedestals from "<<fn<<" to chain"<<jj<<endl;
+            }
 	}
 	gdq->SetCMNoiseQuantile(0.25); //0. -disables common mode noise processing, default = .25
 	gdq->SetCMNoiseLimit(50);
