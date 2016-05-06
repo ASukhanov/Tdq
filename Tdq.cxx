@@ -37,24 +37,14 @@ Now the detecttion of empty events is broken
 v11 2016-04-28 work with less than 4 chain
 
 2016-05-04
-V12
-
+v12 2016-05-06 Major release, tested with FNAL beam
+v13 2016-05-06 PadNumber[0]=cellNumber, PadNumber[1]=ADC[0] ...
 */
 
 #include "globals.h"
+// the globals.h are set aside for compatibility with ROOT-less analysis
 
-//&RA/131108/ Instead of recompiling for DBG, use gDebug member.
-// To use it in root instantiate 'side' Tdq just to access its static member gDebug
-// i.e. Tdq* gg = new Tdq(""); and then manipulate gg.gDebug
-// Uncomment the next line for debugging, if DBG>1 the printout will be very intense
-//#define DBG 1
-
-//#ifdef DBG
-//#define MAXERRPRINT 10000
 #define MAXERRPRINT 100
-//#else
-//#define MAXERRPRINT 4
-//#endif
 
 // for ntohl
 //#ifndef WIN32
@@ -80,26 +70,30 @@ using namespace TMath;
 
 #include "Tdq.h"
 //#include "svx2strip_nomap.h"	// for debugging
-#include "svx2strip_map_v2.h" //v12/ do not use this mapping!
-//#include "svx2strip_map_v1.h"
+#include "svx2strip_map_v2.h" //v12/ used with FNAL16 data
+//#include "svx2strip_map_v1.h" // swapped even odd channels on the SVX, not right for fnal16 data
 
-Int_t Tdq::gDebug=0;
+
+// Default settings, could be changed in the init.C
+Int_t Tdq::gDebug=0; 
 Int_t dbg_cmnoise=0;
-
+//
 Int_t   Tdq::gCMNLimit = 40;	// this rejects 10% of events
 Int_t   Tdq::gCMNControl = 0;	// &1: call DoCMNoise, &2: subtract CMNoise
 Float_t Tdq::gCMNQuantile = 0.25;
 Int_t	Tdq::gExtraWords = 0;	// For events with simulated data this should be set to 1
 Int_t	Tdq::gStripMapping = 0;	// 1 to map ASIC channel number to sensor strip number
 Int_t	Tdq::gSubtractPeds = 0; //
-Int_t	Tdq::gMaxEntries = 10000000; // Number of events to process
-Int_t   Tdq::gHitThreshold = 12;
-
-struct Plane_Def Tdq::gplane[NPLANES] = {{0, 0, 127, 1},{0, 130, 255, 2},{1, 0, 127, 1},{1, 130, 255, 1}};
+Int_t	Tdq::gMaxEntries = 10000000; // Number of events to process.
+Int_t   Tdq::gHitThreshold = 15; // Hit discrimination threshold.
+Int_t   Tdq::gClustering = 0; //disable clustering
+//
+// plane descriptions
+struct Plane_Def Tdq::gplane[NPLANES] = {{0, 1, 128, 1},{0, 130, 257, 2},{1, 1, 128, 1},{1, 130, 257, 1}};
 
 void Tdq::SetPed(Int_t chain, Int_t ich, Float_t pedestal, Int_t stats)
 {
-  if(ich<=MAX_STRIP_IN_PLANE)
+  if(ich<=MAX_STRIP_IN_CHAIN)
   {
     ped[chain][ich]=pedestal;
   }
@@ -377,6 +371,7 @@ Int_t Tdq::Process()
   
   Int_t channel =-999;
   //v12/for(ii=NCHAINS;ii<(nw-fevtl)*2;ii++)
+  int i1=0;
   for(ii=0;ii<(nw-fevtl)*2;ii++)
   {
     //v12/ Why? Not needed for rev1 FEMs /channel = ii/NCHAINS-1; 
@@ -393,11 +388,11 @@ Int_t Tdq::Process()
     }
     int ichip = channel/(CH_IN_ASIC+1); 
     int ich = channel % (CH_IN_ASIC+1);
-    if (gStripMapping) ich = PadNumber[ich];
+    if (gStripMapping) ich = PadNumber[ich]+1; 
     CHV_t chv = (CHV_t)bbody[ii];
     //if(gSubtractPeds) chv -= ped[chain][channel] + 50;
     if(gSubtractPeds) chv -= ped[chain][channel];
-    if(gDebug && chain < 2) cout<<"c("<<chain<<","<<ichip*(CH_IN_ASIC+1) + ich<<")/a("<<ichip<<","<<ich<<")="<<chv<<"\t";
+    if(gDebug && chain < 2) {printf("c(%1i,%03i)/a(%1i,%03i)=%02x\t",chain,channel,ichip,ich,chv); if(i1%4==3) printf("\n");i1++;}
     fchv[chain][ichip*(CH_IN_ASIC+1) + ich] = chv;
   }
   if(gCMNControl && DATA_ARE_ADC) 
@@ -422,8 +417,10 @@ Int_t Tdq::Process()
       }
       if(gDebug) cout<<"p"<<ip<<", nhits:"<<fplane_nhits[ip]<<", mainhit:"<<fplane_hitv[ip]<<" @ "<<fplane_hitp[ip]<<", nl:"<<fchv[chain][ipcm-1]<<", nr:"<<fchv[chain][ipcm+1]<<endl;
       //add neighbors
-      if (fchv[chain][ipcm-1] > gHitThreshold) fplane_hitv[ip] += fchv[chain][ipcm-1];
-      if (fchv[chain][ipcm+1] > gHitThreshold) fplane_hitv[ip] += fchv[chain][ipcm+1];
+      if(gClustering){
+        if (fchv[chain][ipcm-1] > gHitThreshold) fplane_hitv[ip] += fchv[chain][ipcm-1];
+        if (fchv[chain][ipcm+1] > gHitThreshold) fplane_hitv[ip] += fchv[chain][ipcm+1];
+      }
     }
     //fill histogram
     for(chain=0;chain<NCHAINS;chain++)
@@ -559,7 +556,7 @@ Tdq::Tdq(const Char_t *name, Int_t cmnproc_control, const Char_t *htitle)
     ffile = new TFile(oname,"recreate");
     if(ffile == NULL) {printf("ERROR. Could not open %s\n",oname); return;}	
     if(gDebug) {    printf("File opened\n");}
-    fnchn = ASICS_IN_CHAIN*CH_IN_ASIC;
+    fnchn = MAX_STRIP_IN_CHAIN;
     for(ii=0;ii<fnchn;ii++) fchn[ii] = ii;
     fherr = new TH1I("herr","Format Errors",32,0,32);
     printf("Tdq is constructed\n");

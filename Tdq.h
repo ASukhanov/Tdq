@@ -36,16 +36,17 @@
 #define ERRDQ_FCELLN_3 0x800	//bit11
 
 //Added by Arbin
-#define MAX_STRIP_IN_PLANE ASICS_IN_CHAIN*CH_IN_ASIC
-#define MAX_CH_IN_PLANE ASICS_IN_CHAIN*(CH_IN_ASIC+1)
+#define MAX_STRIP_IN_CHAIN ASICS_IN_CHAIN*CH_IN_ASIC
+#define MAX_CH_IN_CHAIN ASICS_IN_CHAIN*(CH_IN_ASIC+1)
 
 #define NPLANES 4
+// Plane description
 struct Plane_Def 
 {  
-  Int_t chain; 
-  Int_t first_ch;
-  Int_t last_ch;
-  Int_t mapping_version;
+  Int_t chain;            // FEM chain, the plane belongs to
+  Int_t first_ch;         // index of the first strip in the chain
+  Int_t last_ch;          // index of the last strip in the chain
+  Int_t mapping_version;  // mapping version, not used for now
 };
 
 typedef Short_t CHV_t;
@@ -54,34 +55,22 @@ typedef Short_t CHV_t;
 class Tdq : public TFile 
 {
 private:
-        //&RA/Char_t fname[1024];
         TTree	*ftree;
         Char_t	fname[256];
         const Char_t	*fhtitle;
-        FILE    *fD; //filhttps://root.cern.ch/doc/master/classTCut.htmle descriptor
+        FILE    *fD;
         TFile   *ffile;
         Int_t	fsize;
         Int_t	fevcount;
         UInt_t	fevnum;
         Int_t   fNSkippedEvents;
         Int_t	fnchn; // length of the longest chain
-        UShort_t	fchn[MAX_CH_IN_PLANE];
+        UShort_t	fchn[MAX_CH_IN_CHAIN];
         Int_t flchain[NCHAINS];
-        CHV_t	fchv[NCHAINS][MAX_CH_IN_PLANE];
+        CHV_t	fchv[NCHAINS][MAX_CH_IN_CHAIN];
         CHV_t	fcmnoise[NCHAINS][6];
-        //$RA/made global in ,cxx/TTree	*gtree;
 
-        //Added by Arbin
-        //v12/Int_t strip[MAX_STRIP_IN_PLANE];
-        Float_t ped[NCHAINS][MAX_STRIP_IN_PLANE];
-        /*v12/Int_t status[NCHAINS][MAX_STRIP_IN_PLANE];
-        //v12/Float_t hitadc[NCHAINS][MAX_STRIP_IN_PLANE];
-        //TH2S *histoadc[NCHAINS];
-        //Int_t hitn[NCHAINS][MAX_STRIP_IN_PLANE];
-        //Int_t hitc[NCHAINS][MAX_STRIP_IN_PLANE];
-        Int_t module;
-        Int_t nmodule;
-        */
+        Float_t ped[NCHAINS][MAX_STRIP_IN_CHAIN];
         
         #define DQ_MINHDR 20	//&RA/141123/ was 14
         UChar_t f1sthdr[DQ_MINHDR];
@@ -133,6 +122,7 @@ private:
         static Int_t gMaxEntries;
         static Int_t gCMNControl;
         static int gHitThreshold;
+        static Int_t gClustering;
         static struct Plane_Def gplane[NPLANES];
         Int_t fplane_hitp[NPLANES];
         CHV_t fplane_hitv[NPLANES];

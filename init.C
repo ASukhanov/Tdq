@@ -27,6 +27,9 @@ Int_t gRunInProgress = 0;
     // if mapping is on then analysis will be in dtector channels space, otherwise - SVX4 space
     gdq->gStripMapping = 1;
     
+    // Enable/disable clustering
+    gdg->gClustering = 1;
+    
     // Pedestal subtraction
     gdq->gSubtractPeds = 0;
     
@@ -34,7 +37,7 @@ Int_t gRunInProgress = 0;
     // 1: calculate but not subtract
     // 2: subtract
     gdq->gCMNControl = 2;
-
+    
     // Number of events to process
     gdq->gMaxEntries = 1000000;
 
@@ -48,8 +51,11 @@ Int_t gRunInProgress = 0;
     // non-dead channels in chain 0
     // in svx space:
     //TCut cutDead0 = "chn!=62 && chn!=64 && chn!=128 && chn!=129 && chn!=95";
-    // in strip space:
-    TCut cutDead0 = "chn>2";
+    // cut noisy hits:
+    TCut cutDead = "hitp[0]!=63 && hitp[0]!=64 && hitp[1]!=0 && hitp[1]!=97";
+    //
+    // cut noise
+    TCut cutHitThr = "hitv[0]>15 && hitv[1]>15";
     //
     // final cut
     TCut cut = cutPT;
