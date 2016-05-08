@@ -1,4 +1,5 @@
 // SVX channels to strip number conversion for SpRC-V6 board
+// This does not produce correct strip mapping.
 // Version v3 2016-05-04. length changed to 130, to deal with a zero word at the end of SVX
 // 
 // The mapping is explained here:

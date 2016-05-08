@@ -1,8 +1,8 @@
 // Swap table to convert SVX channels numbers to sensor pads for strip sensor.
 // The pad[0] is the cell number, pad[1] is ADC[0] ...
-// Version of 2014-07-30	//dimension changed to 129, 
+// Version of 2014-07-30	//dimension changed to 129
 // Version v2 2016-05-05        length changed to 130, to deal with a zero word at the end of SVX
-// Version v3 2016-05-06
+// Version v3 2016-05-06	Tested on FNAL test data
 int PadNumber[130] = {
 -1, // cell number
 32,
