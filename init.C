@@ -26,24 +26,24 @@ Int_t gRunInProgress = 0;
 
     // if mapping is on then analysis will be in dtector channels space, otherwise - SVX4 space
     gdq->gStripMapping = 1;
-    
+
     // Enable/disable clustering
     gdg->gClustering = 1;
-    
+
     // Pedestal subtraction
     gdq->gSubtractPeds = 0;
-    
+
     // Common Mode Subtraction
     // 1: calculate but not subtract
     // 2: subtract
     gdq->gCMNControl = 2;
-    
+
     // Number of events to process
     gdq->gMaxEntries = 1000000;
 
     // Process the newest file
     // last_file();
-    
+
     //''''''''''''''''''''''''''''''''''''''''''
     // Cuts
     // select events unly with good Preamp Reset
@@ -59,7 +59,7 @@ Int_t gRunInProgress = 0;
     //
     // final cut
     TCut cut = cutPT;
-    
+
     // popular histograms, these lines need to be executed manually after process_file(), 
     hTitle = ""; hTitle2 = "";
     TH2S *h2 = new TH2S("h2",hTitle,256,0,256,250,0,256); TH1S *h1 = new TH1S("h1",hTitle,257,-1,256);

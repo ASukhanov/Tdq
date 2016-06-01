@@ -39,6 +39,7 @@ v11 2016-04-28 work with less than 4 chain
 2016-05-04
 v12 2016-05-06 Major release, tested with FNAL beam
 v13 2016-05-06 PadNumber[0]=cellNumber, PadNumber[1]=ADC[0] ...
+v14 2016-06-01 clkphase corrected
 */
 
 #include "globals.h"
@@ -309,7 +310,7 @@ Int_t Tdq::Process()
   //fcelln = Bin2Gray(bbody[3]);
   //printf("ph4=%04x->%04x ph7=%04x->%04x\n",phdr[4],ntohs(phdr[4]),phdr[7],ntohs(phdr[7]));
   fbclk = ntohs(phdr[4]) + (((ntohs(phdr[7])>>4)&0xfff)<<16);
-  fclkphase = fhdr[7]&0x7;
+  fclkphase = ntohs(phdr[7])&0x7; //v14
   cclk = fbclk;
   Long_t clkdiff;
   clkdiff=cclk-fclkprev;

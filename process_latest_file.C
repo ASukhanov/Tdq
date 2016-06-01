@@ -6,12 +6,14 @@ gROOT->ProcessLine(".x init.C");
 
 // get the name of the last file
 //gSystem->Exec("ls -t /tmp/*.dq4 | head -1 > lastFile.txt");
-gSystem->Exec("ls -t /data/phnxsa/si_hodoscope/*.dq4 | head -1 > lastFile.txt");
+//gSystem->Exec("ls -t /data/phnxsa/si_hodoscope/*.dq4 | head -1 > lastFile.txt");
+gSystem->Exec("ls -t /home/andrey/data/sitrack/*.dq4 | head -1 > lastFile.txt");
+
 FILE *fp = fopen("lastFile.txt","r");
 char lastFile[81];
 fgets(&lastFile,80,fp);
 fclose(fp);
-lastFile[strlen(lastFile)-1]=0; //strip 
+lastFile[strlen(lastFile)-1]=0; //strip
 //cout<<"("<<lastFile<<")"<<endl;
 process_file(lastFile);
 }
