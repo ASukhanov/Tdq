@@ -98,9 +98,9 @@ Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master
 		    tl.Tokenize(tok,ix,"\t");
 		    if(ix<0)continue;
 		    tl.Tokenize(tok,ix,"\t");
-		    //cout<<ii<<":"<<tok<<endl;
+		    //cout<<ii<<":["<<tok<<"]"<<endl;
 		    if(tok.IsDigit())    iy = tok.Atoi();
-		    else break;
+		    else continue;
 		    //if (ii<10) cout<<ii<<":"<<iy<<endl;
 		    gdq->SetPed(jj,ii,iy,1);
 		    ii++;
