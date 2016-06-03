@@ -1,3 +1,6 @@
+// Process data file from MPCEX FEM, captured by dqc.py program
+// Version v2  2016-06-03. Replaced IsDec with IsDigit
+
 #include "globals.h"
 
 #define PROCESS_MODE 1
@@ -85,6 +88,9 @@ Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master
               fn += jj;
               fn += suff;
               fin.open(fn);
+              if(fin.is_open()) cout<<"opened "<<fn<<endl;
+              else {cout<<"ERROR opening "<<fn<<endl; exit(1);}
+                
 	      while(getline(fin, line))
 	      {
 		    ix=0;
@@ -93,7 +99,7 @@ Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master
 		    if(ix<0)continue;
 		    tl.Tokenize(tok,ix,"\t");
 		    //cout<<ii<<":"<<tok<<endl;
-		    if(tok.IsDec())    iy = tok.Atoi();
+		    if(tok.IsDigit())    iy = tok.Atoi();
 		    else break;
 		    //if (ii<10) cout<<ii<<":"<<iy<<endl;
 		    gdq->SetPed(jj,ii,iy,1);
@@ -103,7 +109,7 @@ Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master
               if(ii==0)
               {
                 cout<<"ERROR. No pedestals from file "<<fn<<endl;
-                exit(1)
+                exit(1);
               }
 	      cout<<"Set "<<ii<<" pedestals from "<<fn<<" to chain"<<jj<<endl;
             }
@@ -120,8 +126,9 @@ Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master
 	cout<<"File processed, "<<ii<<" active chains found"<<endl;
 	if(ii)
 	{
-		cout<<"You can draw the chain using: gdq->GetChain(chain)->Draw(\"colz\") and for hits only, use GetHits(chain)"<<endl;
-		if(gRunInProgress) cout<<"Waiting for next file..."<<endl; //gRunInProgress is defined in Init.C
+		//cout<<"You can draw the chain using: gdq->GetChain(chain)->Draw(\"colz\") and for hits only, use GetHits(chain)"<<endl;
+                cout<<"To draw summary plots: .x draw_summary.C"<<endl;
+                if(gRunInProgress) cout<<"Waiting for next file..."<<endl; //gRunInProgress is defined in Init.C
 		cnv_pf.cd();
 		cnv_pf.SetTitle(tdq_run_name());
 		gdq->GetChain(chain)->Draw("colz");

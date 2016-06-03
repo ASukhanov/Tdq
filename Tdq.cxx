@@ -655,7 +655,7 @@ TTree* Tdq::MakeTree(Int_t mode)
       cout<<"loop"<<endl;
       for(ii=0;ii<NCHAINS;ii++)
       {
-        cout<<"ii="<<ii<<endl;
+        //cout<<"ii="<<ii<<endl;
         if(flchain[ii]<=0) break;
         cout<<"writing chain["<<ii<<"]["<<flchain[ii]<<endl;
         if(fhchns[ii]) fhchns[ii]->Write();
