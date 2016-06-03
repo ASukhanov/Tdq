@@ -1,0 +1,52 @@
+{
+//TString fname = gdq->GetFileName();
+//TString run = "Run ";
+//run += fname(fname.Last('/')+1,100);
+//TCanvas cnv_pf("cnv_pf",run,1200,800);
+TCut cut0 = "hitv[0]>9";
+TCut cut1 = "hitv[1]>9";
+TCut cut2 = "hitv[2]>9";
+TCut cut3 = "hitv[3]>9";
+
+cnv_pf->Clear();
+cnv_pf->Divide(2,3);
+cnv_pf.cd(1)->SetLogz(); gdq->GetChain(0)->Draw("colz");
+cnv_pf.cd(2)->SetLogz(); gdq->GetChain(1)->Draw("colz");
+cnv_pf.cd(3)->SetLogy();
+Int_t hitvmax = 120;
+TH1S hhitv0 = TH1S("hhitv0","Hit amplitudes in planes",hitvmax,0,hitvmax);
+hhitv0.SetLineColor(1);
+gTree->Draw("hitv[0]>>hhitv0");
+TH1S hhitv1 = TH1S("hhitv1","Hit amplitudes in plane1",hitvmax,0,hitvmax);
+hhitv1.SetLineColor(2);
+gTree->Draw("hitv[1]>>hhitv1","","same");
+TH1S hhitv2 = TH1S("hhitv2","Hit amplitudes in plane1",hitvmax,0,hitvmax);
+hhitv2->SetLineColor(3);
+gTree->Draw("hitv[2]>>hhitv2","","same");
+TH1S hhitv3 = TH1S("hhitv3","Hit amplitudes in plane1",hitvmax,0,hitvmax);
+hhitv3.SetLineColor(4);
+gTree->Draw("hitv[3]>>hhitv3","","same");
+cnv_pf.cd(4);
+TH2S h2hitv02 = TH2S("h2hitv02","Hit amlitude in plane0 vs plane2",100,0,100,100,0,100);
+h2hitv02.SetMaximum(10);
+gTree->Draw("hitv[0]:hitv[2]>>h2hitv02","","colz");
+cnv_pf.cd(5);
+TH2S h2hitp02 = TH2S("h2hitp02","Hit position in plane0 vs plane2",128,0,128,128,0,128);
+h2hitp02.SetMaximum(10);
+gTree->Draw("hitp[0]:hitp[2]>>h2hitp02",cut0&&cut2,"colz");
+cnv_pf.cd(6);
+TH2S h2hitp01 = TH2S("h2hitp01","Hit position in plane0 vs plane1",128,0,128,128,0,128);
+h2hitp01.SetMaximum(10);
+gTree->Draw("hitp[0]:hitp[1]>>h2hitp01",cut0&&cut1,"colz");
+
+cnv_pf->cd(3);
+Double_t eff = h2hitp02.GetEntries()/gTree->GetEntries();
+Int_t ieff = (Int_t)(eff*100);
+TString ts_eff = "Efficiency = "; 
+ts_eff += ieff; 
+ts_eff += "%";
+TText tt_eff = TText(.5,.5,ts_eff);
+tt_eff->SetNDC(kTRUE);
+tt_eff->Draw();
+cout<<"Efficiency="<<eff<<endl;
+}

@@ -26,7 +26,7 @@ TCut firstChip = "fchn<128";
 TCut secondChip = "128<=fchn&&fchn<256";
 //TH2F hadc_chn("adc_chn","ADC vs Channel ID",MAXCH,0,MAXCH,256,0,256);
 */
-TCanvas cnv_pf("cnv_pf","",0,10,1500,800);
+TCanvas cnv_pf("cnv_pf","",0,10,1200,800);
 TCanvas cnv_err("cnv_err","");
 TString ghtitle("");
 TString ss;
@@ -38,7 +38,7 @@ Char_t *tdq_run_name()
 	ss = ss(i2,ss.Last('.')-i2);
 	return ss.Data();
 }
-Int_t process_file(TString txt, Int_t cmnproc=-1)
+Int_t process_file(TString txt, Int_t cmnproc=-1)https://root.cern.ch/doc/master/classTCanvas.html
 {
 
 	Int_t maxch=0,ii,in,chain;
