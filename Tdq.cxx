@@ -373,6 +373,7 @@ Int_t Tdq::Process()
   Int_t channel =-999;
   //v12/for(ii=NCHAINS;ii<(nw-fevtl)*2;ii++)
   int i1=0;
+  memset(fchv,0,sizeof(fchv));
   for(ii=0;ii<(nw-fevtl)*2;ii++)
   {
     //v12/ Why? Not needed for rev1 FEMs /channel = ii/NCHAINS-1; 
@@ -393,7 +394,7 @@ Int_t Tdq::Process()
     CHV_t chv = (CHV_t)bbody[ii];
     //if(gSubtractPeds) chv -= ped[chain][channel] + 50;
     if(gSubtractPeds) chv -= ped[chain][channel];
-    if(gDebug && chain < 2) {printf("c(%1i,%03i)/a(%1i,%03i)=%02x\t",chain,channel,ichip,ich,chv); if(i1%4==3) printf("\n");i1++;}
+    if(gDebug && chain < 2) {printf("c(%1i,%03i)/a(%1i,%03i)=%02i\t",chain,channel,ichip,ich,chv); if(i1%4==3) printf("\n");i1++;}
     fchv[chain][ichip*(CH_IN_ASIC+1) + ich] = chv;
   }
   if(gCMNControl && DATA_ARE_ADC) 
@@ -404,7 +405,7 @@ Int_t Tdq::Process()
     for (ip=0;ip<NPLANES;ip++)
     {
       chain = gplane[ip].chain;
-      fplane_nhits[ip] = 0; fplane_hitv[ip]=-1; fplane_hitp[ip]=-1; ipcm = 0;
+      fplane_nhits[ip] = 0; fplane_hitv[ip]=0; fplane_hitp[ip]=0; ipcm = 0;
       for (ipc=gplane[ip].first_ch; ipc<=gplane[ip].last_ch; ipc++)
       {
         if(ipc>=flchain[chain]) break;
@@ -416,7 +417,10 @@ Int_t Tdq::Process()
           fplane_hitv[ip] = fchv[chain][ipc];
         }
       }
-      if(gDebug) cout<<"p"<<ip<<", nhits:"<<fplane_nhits[ip]<<", mainhit:"<<fplane_hitv[ip]<<" @ "<<fplane_hitp[ip]<<", nl:"<<fchv[chain][ipcm-1]<<", nr:"<<fchv[chain][ipcm+1]<<endl;
+      if(gDebug) cout<<"p"<<ip<<",c"<<chain<<", nhits:"<<fplane_nhits[ip]
+                     <<", mainhit:"<<fplane_hitv[ip]<<" @ "<<fplane_hitp[ip]
+                     <<", nl:"<<fchv[chain][ipcm-1]
+                     <<", nr:"<<fchv[chain][ipcm+1]<<endl;
       //add neighbors
       if(gClustering){
         if (fchv[chain][ipcm-1] > gHitThreshold) fplane_hitv[ip] += fchv[chain][ipcm-1];
@@ -498,6 +502,7 @@ void Tdq::DoCMNoise(Int_t chain)
       {
         fchv[chain][ic*(CH_IN_ASIC+1) + ii] -= (CHV_t)(fcmnoise[chain][ic]);
       }
+      if(gDebug) cout<<"CMN in chip["<<chain<<","<<ic<<"] subtracted "<<fcmnoise[chain][ic]<<endl;
     }
   }
 }

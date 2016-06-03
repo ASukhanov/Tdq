@@ -19,24 +19,24 @@ Int_t gRunInProgress = 0;
     //obsolete//cout<<"Now you can start the analysis using '.x run.C or .x check_for_file.C()'"<<endl;
 
     // Set the run-specific globals
-    gdq->gDebug = 0;
+    gdq->gDebug = 0; // set to 1 for debugging output
 
     // The following line may be necessary to account for extra words
-    gdq->gExtraWords = 0;
+    gdq->gExtraWords = 0; // normally 0 for the released firmware
 
-    // if mapping is on then analysis will be in dtector channels space, otherwise - SVX4 space
+    // if mapping is on then the analysis will be in the detector channels space, otherwise - in SVX4 space
     gdq->gStripMapping = 1;
 
     // Enable/disable clustering
-    gdg->gClustering = 1;
+    gdg->gClustering = 0; // 1: to add amlitudes of two neighboring strips to the hitv
 
     // Pedestal subtraction
-    gdq->gSubtractPeds = 0;
+    gdq->gSubtractPeds = 1;
 
     // Common Mode Subtraction
     // 1: calculate but not subtract
     // 2: subtract
-    gdq->gCMNControl = 2;
+    gdq->gCMNControl = 0;
 
     // Number of events to process
     gdq->gMaxEntries = 1000000;
@@ -45,7 +45,7 @@ Int_t gRunInProgress = 0;
     // last_file();
 
     //''''''''''''''''''''''''''''''''''''''''''
-    // Cuts
+    // Cut, useful for drawing tree branches
     // select events unly with good Preamp Reset
     TCut cutPT = "hPARTime<7 || hPARTime>9";
     // non-dead channels in chain 0
@@ -60,10 +60,10 @@ Int_t gRunInProgress = 0;
     // final cut
     TCut cut = cutPT;
 
-    // popular histograms, these lines need to be executed manually after process_file(), 
+    /* popular histograms, these lines need to be executed manually after process_file(), 
     hTitle = ""; hTitle2 = "";
     TH2S *h2 = new TH2S("h2",hTitle,256,0,256,250,0,256); TH1S *h1 = new TH1S("h1",hTitle,257,-1,256);
-    //
+    */
 }
 
 

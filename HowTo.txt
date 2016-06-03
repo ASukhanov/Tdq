@@ -4,9 +4,10 @@ HowTo
 Calculate pedestals:
 $root -l init.C
 
-Tdq* gdq = new Tdq()	//creat dummy Tdq to access static variables
+Tdq* gdq = new Tdq();   //creat dummy Tdq to access static variables
 
-gdq->gStripMapping = 0	//to disable strip gStripMapping
+gdq->gStripMapping = 0; //to disable strip gStripMapping
+gdq->gCMNControl = 0;   // to disable common mode subtraction
 
 .x process_file.C("~/data/slac/140730100346.dq4")
 
